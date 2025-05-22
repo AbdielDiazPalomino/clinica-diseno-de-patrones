@@ -6,6 +6,7 @@ import clinica.storage.Repositorio;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import clinica.validadores.ValidadorBase;
@@ -63,7 +64,8 @@ public class AgendaService {
     }
 
     public List<String> obtenerEspecialidades() {
-        return repositorio.obtenerEspecialidades();
+        List<String> especialidades = repositorio.obtenerEspecialidades();
+        return especialidades != null ? especialidades : Collections.emptyList();
     }
 
     public List<Medico> obtenerMedicosPorEspecialidad(String especialidad) {

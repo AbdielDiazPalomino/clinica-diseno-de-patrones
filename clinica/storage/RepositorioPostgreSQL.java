@@ -14,42 +14,36 @@ public class RepositorioPostgreSQL implements Repositorio {
     private final String password = "1234";
 
     @Override
-    public void guardar(List<Cita> citas) {
-        String sqlMedico = "INSERT INTO medicos (nombre, especialidad) VALUES (?, ?) ON CONFLICT DO NOTHING";
+    public void guardar(Cita nuevaCita) {
+        
         String sqlPaciente = "INSERT INTO pacientes (nombre, edad) VALUES (?, ?) ON CONFLICT DO NOTHING";
         String sqlCita = "INSERT INTO citas (id_medico, id_paciente, fecha_hora) VALUES (?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
             
             // Guardar médicos y pacientes primero
-            for (Cita c : citas) {
-                // Insertar médico
-                try (PreparedStatement pstmt = conn.prepareStatement(sqlMedico, Statement.RETURN_GENERATED_KEYS)) {
-                    pstmt.setString(1, c.getMedico().getNombre());
-                    pstmt.setString(2, c.getMedico().getEspecialidad());
-                    pstmt.executeUpdate();
-                }
+           
                 
-                // Insertar paciente
-                try (PreparedStatement pstmt = conn.prepareStatement(sqlPaciente, Statement.RETURN_GENERATED_KEYS)) {
-                    pstmt.setString(1, c.getPaciente().getNombre());
-                    pstmt.setInt(2, c.getPaciente().getEdad());
-                    pstmt.executeUpdate();
-                }
+            // Insertar paciente
+            try (PreparedStatement pstmt = conn.prepareStatement(sqlPaciente, Statement.RETURN_GENERATED_KEYS)) {
+                pstmt.setString(1, nuevaCita.getPaciente().getNombre());
+                pstmt.setInt(2, nuevaCita.getPaciente().getEdad());
+                pstmt.executeUpdate();
             }
+            
 
             // Guardar citas
             try (PreparedStatement pstmt = conn.prepareStatement(sqlCita)) {
-                for (Cita c : citas) {
+                
                     // Obtener IDs de médico y paciente
-                    int idMedico = obtenerIdMedico(conn, c.getMedico());
-                    int idPaciente = obtenerIdPaciente(conn, c.getPaciente());
+                int idMedico = obtenerIdMedico(conn, nuevaCita.getMedico());
+                int idPaciente = obtenerIdPaciente(conn, nuevaCita.getPaciente());
                     
-                    pstmt.setInt(1, idMedico);
-                    pstmt.setInt(2, idPaciente);
-                    pstmt.setTimestamp(3, Timestamp.valueOf(c.getFechaHora()));
-                    pstmt.addBatch();
-                }
+                pstmt.setInt(1, idMedico);
+                pstmt.setInt(2, idPaciente);
+                pstmt.setTimestamp(3, Timestamp.valueOf(nuevaCita.getFechaHora()));
+                pstmt.addBatch();
+                
                 pstmt.executeBatch();
             }
             

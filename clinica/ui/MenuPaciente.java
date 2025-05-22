@@ -16,7 +16,9 @@ import java.util.List;
 public class MenuPaciente extends JFrame {
     private final AgendaService agenda;
     private Paciente paciente;
-    private JComboBox<String> medicosComboBox;
+
+    private JComboBox<String> cbEspecialidades;
+    private JComboBox<Medico> cbMedicos;
 
     public MenuPaciente(AgendaService agenda) {
         this.agenda = agenda;
@@ -32,6 +34,9 @@ public class MenuPaciente extends JFrame {
     }
 
     private void initComponents() {
+        cbEspecialidades = new JComboBox<>();
+        cbMedicos = new JComboBox<>();
+
         JPanel panel = new JPanel(new GridLayout(0, 2, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -47,14 +52,20 @@ public class MenuPaciente extends JFrame {
         panel.add(spnEdad);
 
         // Lista de especialidades
-        JComboBox<String> cbEspecialidades = new JComboBox<>();
+        //JComboBox<String> cbEspecialidades = new JComboBox<>();
         DefaultComboBoxModel<String> modeloEspecialidades = new DefaultComboBoxModel<>();
         modeloEspecialidades.addElement("Seleccione especialidad");
-        agenda.obtenerEspecialidades().forEach(modeloEspecialidades::addElement);
+
+        List<String> especialidades = agenda.obtenerEspecialidades();
+        
+        if (especialidades != null) {
+            especialidades.forEach(modeloEspecialidades::addElement);
+        }
+
         cbEspecialidades.setModel(modeloEspecialidades);
+        
 
         // Lista de médicos (actualizable)
-        JComboBox<Medico> cbMedicos = new JComboBox<>();
         cbMedicos.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -94,20 +105,23 @@ public class MenuPaciente extends JFrame {
         JButton btnCancelar = new JButton("Cancelar Cita");
 
         btnAgendar.addActionListener(e -> {
+            Medico medicoSeleccionado = cbMedicos.getItemAt(cbMedicos.getSelectedIndex());
+            // Validar selección
+            if (medicoSeleccionado == null) {
+                JOptionPane.showMessageDialog(this, "Seleccione un médico", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             // Generar ID automático (simulado)
             int idPaciente = generarIdPaciente(); 
             paciente = new Paciente(idPaciente, txtNombre.getText(), (int) spnEdad.getValue());
             
-            // Obtener médico seleccionado
-            String[] datosMedico = medicosComboBox.getSelectedItem().toString().split(" - ");
-            Medico medico = new Medico(1, datosMedico[0], datosMedico[1]);
             
             // Parsear fecha
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
                 LocalDateTime fecha = LocalDateTime.parse(txtFecha.getText(), formatter);
                 
-                agenda.agendar(new Cita(medico, paciente, fecha));
+                agenda.agendar(new Cita(medicoSeleccionado, paciente, fecha));
                 JOptionPane.showMessageDialog(this, "Cita agendada exitosamente!");
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Formato de fecha inválido!", "Error", JOptionPane.ERROR_MESSAGE);
