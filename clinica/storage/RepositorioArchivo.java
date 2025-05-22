@@ -75,18 +75,17 @@ public class RepositorioArchivo implements Repositorio {
 
     @Override
     public void guardarMedico(Medico medico) {
-        String sql = "INSERT INTO medicos (nombre, especialidad) VALUES (?, ?)";
         
-        /*try (Connection conn = DriverManager.getConnection(url, user, password);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, medico.getNombre());
-            pstmt.setString(2, medico.getEspecialidad());
-            pstmt.executeUpdate();
-            
-        } catch (SQLException e) {
-            System.err.println("Error al guardar médico: " + e.getMessage());
-        }*/
+    }
+
+    @Override
+    public List<String> obtenerEspecialidades(){
+        return null;
+    }
+
+    @Override
+    public List<Medico> obtenerMedicosPorEspecialidad(String especialidad){
+        return null;
     }
     
 }

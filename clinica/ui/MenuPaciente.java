@@ -9,6 +9,8 @@ import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import clinica.storage.RepositorioArchivo; // Añadir esta línea
+import java.util.List;
+
 
 
 public class MenuPaciente extends JFrame {
@@ -44,17 +46,48 @@ public class MenuPaciente extends JFrame {
         panel.add(lblEdad);
         panel.add(spnEdad);
 
-        // Lista de Médicos
-        JLabel lblMedico = new JLabel("Médico:");
-        medicosComboBox = new JComboBox<>(new String[]{"Dr. Ana López - Cardiología", "Dr. Carlos Ruiz - Dermatología"});
-        panel.add(lblMedico);
-        panel.add(medicosComboBox);
+        // Lista de especialidades
+        JComboBox<String> cbEspecialidades = new JComboBox<>();
+        DefaultComboBoxModel<String> modeloEspecialidades = new DefaultComboBoxModel<>();
+        modeloEspecialidades.addElement("Seleccione especialidad");
+        agenda.obtenerEspecialidades().forEach(modeloEspecialidades::addElement);
+        cbEspecialidades.setModel(modeloEspecialidades);
+
+        // Lista de médicos (actualizable)
+        JComboBox<Medico> cbMedicos = new JComboBox<>();
+        cbMedicos.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Medico) {
+                    Medico m = (Medico) value;
+                    setText(m.getNombre() + " (" + m.getEspecialidad() + ")");
+                }
+                return this;
+            }
+        });
+
+        // Actualizar médicos al seleccionar especialidad
+        cbEspecialidades.addActionListener(e -> {
+            if (cbEspecialidades.getSelectedIndex() > 0) {
+                String especialidad = (String) cbEspecialidades.getSelectedItem();
+                List<Medico> medicos = agenda.obtenerMedicosPorEspecialidad(especialidad);
+                
+                DefaultComboBoxModel<Medico> modeloMedicos = new DefaultComboBoxModel<>();
+                medicos.forEach(modeloMedicos::addElement);
+                cbMedicos.setModel(modeloMedicos);
+            }
+        });
 
         // Fecha y Hora
         JLabel lblFecha = new JLabel("Fecha y Hora (dd/MM/yyyy HH:mm):");
         JTextField txtFecha = new JTextField();
         panel.add(lblFecha);
         panel.add(txtFecha);
+        panel.add(new JLabel("Especialidad:"));
+        panel.add(cbEspecialidades);
+        panel.add(new JLabel("Médico:"));
+        panel.add(cbMedicos);
 
         // Botones
         JButton btnAgendar = new JButton("Agendar Cita");

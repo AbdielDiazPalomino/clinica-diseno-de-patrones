@@ -9,5 +9,7 @@ public interface Repositorio {
     void guardar(List<Cita> citas);
     List<Cita> cargar();
     void guardarMedico(Medico medico); 
+    List<String> obtenerEspecialidades();
+    List<Medico> obtenerMedicosPorEspecialidad(String especialidad);
 
 }

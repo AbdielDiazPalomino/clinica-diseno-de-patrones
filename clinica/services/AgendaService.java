@@ -61,5 +61,13 @@ public class AgendaService {
     public void agregarMedico(Medico medico) {
         repositorio.guardarMedico(medico);
     }
+
+    public List<String> obtenerEspecialidades() {
+        return repositorio.obtenerEspecialidades();
+    }
+
+    public List<Medico> obtenerMedicosPorEspecialidad(String especialidad) {
+        return repositorio.obtenerMedicosPorEspecialidad(especialidad);
+    }
 }
 

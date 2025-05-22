@@ -133,4 +133,46 @@ public class RepositorioPostgreSQL implements Repositorio {
         }
         return -1;
     }
+
+    @Override
+    public List<String> obtenerEspecialidades() {
+        List<String> especialidades = new ArrayList<>();
+        String sql = "SELECT DISTINCT especialidad FROM medicos";
+        
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                especialidades.add(rs.getString("especialidad"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al cargar especialidades: " + e.getMessage());
+        }
+        return especialidades;
+    }
+
+    @Override
+    public List<Medico> obtenerMedicosPorEspecialidad(String especialidad) {
+        List<Medico> medicos = new ArrayList<>();
+        String sql = "SELECT id, nombre FROM medicos WHERE especialidad = ?";
+        
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, especialidad);
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                medicos.add(new Medico(
+                    rs.getInt("id"),
+                    rs.getString("nombre"),
+                    especialidad
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al cargar médicos: " + e.getMessage());
+        }
+        return medicos;
+    }
 }
