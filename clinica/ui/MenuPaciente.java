@@ -167,7 +167,21 @@ public class MenuPaciente extends JFrame {
             setOpaque(true);
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, 
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            
+            // Resetear estado
+            setForeground(Color.BLACK);
+            setBackground(UIManager.getColor("Button.background"));
+            setBorder(UIManager.getBorder("Button.border"));
+            
+            // Cambiar apariencia en hover/selección
+            if (isSelected) {
+                setBackground(Color.LIGHT_GRAY);
+                setBorder(BorderFactory.createLineBorder(Color.BLUE));
+            }
+            
             setText((value == null) ? "" : value.toString());
             return this;
         }
@@ -179,39 +193,32 @@ public class MenuPaciente extends JFrame {
         private JTable table;
         private int row;
 
-        // Constructor actualizado
         public ButtonEditor(JCheckBox checkBox, AgendaService agenda, JTable table) {
             super(checkBox);
             this.agenda = agenda;
             this.table = table;
             button = new JButton("Cancelar");
-            button.addActionListener(e -> fireEditingStopped());
+            button.setFocusPainted(false); // Evitar borde feo al hacer clic
+
+            // Activar el editor inmediatamente al hacer clic
+            button.addActionListener(e -> {
+                
+                System.out.println("CANCELADO"); 
+                
+                ((DefaultTableModel) table.getModel()).removeRow(row);
+                table.repaint();
+            });
         }
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            this.row = row; // Guardar la fila actual
+            this.row = row;
             return button;
         }
 
         @Override
         public Object getCellEditorValue() {
-            // Obtener datos de la fila seleccionada
-            String fechaStr = (String) table.getModel().getValueAt(row, 0);
-            String nombrePaciente = ((JTextField) ((JPanel) table.getParent().getParent().getComponent(0)).getComponent(1)).getText();
-            
-            // Cancelar la cita
-            int respuesta = JOptionPane.showConfirmDialog(
-                null, 
-                "¿Cancelar cita del " + fechaStr + "?", 
-                "Confirmar", 
-                JOptionPane.YES_NO_OPTION
-            );
-            
-            if (respuesta == JOptionPane.YES_OPTION) {
-                JOptionPane.showMessageDialog(null, "Cita cancelada!"); // Mostrar mensaje
-            }
-            
+            System.out.println("CANCELADO"); // Mensaje en consola
             return "Cancelar";
         }
     }
@@ -244,6 +251,26 @@ public class MenuPaciente extends JFrame {
             };
             JTable tablaCitas = new JTable(modeloTabla);
             tablaCitas.setRowHeight(30);
+
+            // Listener para detectar clic en cualquier fila
+            tablaCitas.getSelectionModel().addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting()) {
+                    int filaSeleccionada = tablaCitas.getSelectedRow();
+                    if (filaSeleccionada != -1) {
+                        // Diálogo de confirmación
+                        int respuesta = JOptionPane.showConfirmDialog(
+                            this,
+                            "¿Está seguro que desea cancelar esta cita?",
+                            "Confirmar Cancelación",
+                            JOptionPane.YES_NO_OPTION
+                        );
+                        
+                        if (respuesta == JOptionPane.YES_OPTION) {
+                            System.out.println("Cita CANCELADA");
+                        }
+                    }
+                }
+            });
 
             // Renderizado personalizado para el estado y botones
             tablaCitas.getColumnModel().getColumn(3).setCellRenderer(new EstadoRenderer());
