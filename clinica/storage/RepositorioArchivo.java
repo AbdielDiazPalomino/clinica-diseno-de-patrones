@@ -22,19 +22,19 @@ public class RepositorioArchivo implements Repositorio {
     }
 
     @Override
-    public void guardar(List<Cita> citas) {
+    public void guardar(Cita citas) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivo))) {
-            for (Cita c : citas) {
-                String linea = c.getMedico().getId() + "," +
-                               c.getMedico().getNombre() + "," +
-                               c.getMedico().getEspecialidad() + "," +
-                               c.getPaciente().getId() + "," +
-                               c.getPaciente().getNombre() + "," +
-                               c.getPaciente().getEdad() + "," +
-                               c.getFechaHora();
+            
+                String linea = citas.getMedico().getId() + "," +
+                               citas.getMedico().getNombre() + "," +
+                               citas.getMedico().getEspecialidad() + "," +
+                               citas.getPaciente().getId() + "," +
+                               citas.getPaciente().getNombre() + "," +
+                               citas.getPaciente().getEdad() + "," +
+                               citas.getFechaHora();
                 writer.write(linea);
                 writer.newLine();
-            }
+            
         } catch (IOException e) {
             System.out.println("Error al guardar archivo: " + e.getMessage());
         }

@@ -6,7 +6,7 @@ import clinica.models.Medico;
 import java.util.List;
 
 public interface Repositorio {
-    void guardar(Cita citas);
+    void guardar(Cita cita);
     List<Cita> cargar();
     void guardarMedico(Medico medico); 
     List<String> obtenerEspecialidades();

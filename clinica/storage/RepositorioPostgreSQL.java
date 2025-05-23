@@ -15,58 +15,84 @@ public class RepositorioPostgreSQL implements Repositorio {
 
     @Override
     public void guardar(Cita nuevaCita) {
-        
-        String sqlPaciente = "INSERT INTO pacientes (nombre, edad) VALUES (?, ?) ON CONFLICT DO NOTHING";
+        String sqlPaciente = "INSERT INTO pacientes (nombre, edad) VALUES (?, ?) ON CONFLICT (nombre, edad) DO NOTHING RETURNING id";
         String sqlCita = "INSERT INTO citas (id_medico, id_paciente, fecha_hora) VALUES (?, ?, ?)";
-
+        System.out.println("GUARDAR");
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
-            
-            // Guardar médicos y pacientes primero
-           
-                
-            // Insertar paciente
-            try (PreparedStatement pstmt = conn.prepareStatement(sqlPaciente, Statement.RETURN_GENERATED_KEYS)) {
-                pstmt.setString(1, nuevaCita.getPaciente().getNombre());
-                pstmt.setInt(2, nuevaCita.getPaciente().getEdad());
-                pstmt.executeUpdate();
-            }
-            
+            conn.setAutoCommit(false); 
 
-            // Guardar citas
-            try (PreparedStatement pstmt = conn.prepareStatement(sqlCita)) {
+            int idPaciente;
+
+            // 1. Insertar paciente (si no existe) y obtener su ID
+            try (PreparedStatement pstmtPaciente = conn.prepareStatement(sqlPaciente)) {
+                pstmtPaciente.setString(1, nuevaCita.getPaciente().getNombre());
+                pstmtPaciente.setInt(2, nuevaCita.getPaciente().getEdad());
+                ResultSet rs = pstmtPaciente.executeQuery();
                 
-                    // Obtener IDs de médico y paciente
-                int idMedico = obtenerIdMedico(conn, nuevaCita.getMedico());
-                int idPaciente = obtenerIdPaciente(conn, nuevaCita.getPaciente());
-                    
-                pstmt.setInt(1, idMedico);
-                pstmt.setInt(2, idPaciente);
-                pstmt.setTimestamp(3, Timestamp.valueOf(nuevaCita.getFechaHora()));
-                pstmt.addBatch();
-                
-                pstmt.executeBatch();
+                if (rs.next()) {
+                    idPaciente = rs.getInt("id");
+                    System.out.println("[DEBUG] Nuevo ID Paciente: " + idPaciente); // 👈 Log
+                } else {
+                    idPaciente = obtenerIdPaciente(conn, nuevaCita.getPaciente());
+                    System.out.println("[DEBUG] ID Paciente existente: " + idPaciente); // 👈 Log
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
             }
-            
+
+            // 2. Obtener ID médico
+            int idMedico = nuevaCita.getMedico().getId();
+            System.out.println("[DEBUG] ID Médico: " + idMedico); // 👈 Log
+
+            // 3. Insertar cita
+            try (PreparedStatement pstmtCita = conn.prepareStatement(sqlCita)) {
+                pstmtCita.setInt(1, idMedico);
+                pstmtCita.setInt(2, idPaciente);
+                pstmtCita.setTimestamp(3, Timestamp.valueOf(nuevaCita.getFechaHora()));
+                pstmtCita.executeUpdate();
+                conn.commit(); // ✅ Confirmar transacción
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+
         } catch (SQLException e) {
-            System.err.println("Error al guardar en PostgreSQL: " + e.getMessage());
+            System.err.println("Error al guardar cita: " + e.getMessage());
         }
     }
 
     @Override
     public void guardarMedico(Medico medico) {
-        String sql = "INSERT INTO medicos (nombre, especialidad) VALUES (?, ?)";
+        String sql = "INSERT INTO medicos (nombre, especialidad) VALUES (?, ?) ON CONFLICT (nombre, especialidad) DO NOTHING RETURNING id";
         
-        try (Connection conn = DriverManager.getConnection(url, user, password);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, medico.getNombre());
-            pstmt.setString(2, medico.getEspecialidad());
-            pstmt.executeUpdate();
-            
+        try (Connection conn = DriverManager.getConnection(url, user, password)) {
+            // Insertar o obtener ID existente
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, medico.getNombre());
+                pstmt.setString(2, medico.getEspecialidad());
+                ResultSet rs = pstmt.executeQuery();
+                
+                if (rs.next()) {
+                    medico.setId(rs.getInt("id")); // ID nuevo
+                } else {
+                    // Si ya existe, obtener su ID
+                    String selectSql = "SELECT id FROM medicos WHERE nombre = ? AND especialidad = ?";
+                    try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+                        selectStmt.setString(1, medico.getNombre());
+                        selectStmt.setString(2, medico.getEspecialidad());
+                        ResultSet selectRs = selectStmt.executeQuery();
+                        if (selectRs.next()) {
+                            medico.setId(selectRs.getInt("id"));
+                        }
+                    }
+                }
+            }
         } catch (SQLException e) {
             System.err.println("Error al guardar médico: " + e.getMessage());
         }
     }
+
 
     @Override
     public List<Cita> cargar() {

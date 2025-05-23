@@ -5,12 +5,17 @@ import clinica.models.Medico;
 import clinica.models.Paciente;
 import clinica.services.AgendaService;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import clinica.storage.RepositorioArchivo; // Añadir esta línea
-import java.util.List;
+import clinica.storage.RepositorioPostgreSQL;
 
+import java.util.Comparator;
+import java.util.List;
 
 
 public class MenuPaciente extends JFrame {
@@ -129,7 +134,7 @@ public class MenuPaciente extends JFrame {
         });
 
         btnCancelar.addActionListener(e -> {
-            new CancelarCitaDialog(this, agenda, paciente).setVisible(true);
+            new CancelarCitaDialog(this, agenda).setVisible(true); 
         });
 
         panel.add(btnAgendar);
@@ -139,42 +144,157 @@ public class MenuPaciente extends JFrame {
     }
 
     private int generarIdPaciente() {
-        // En una implementación real, consultaría la base de datos
-        return (int) (Math.random() * 1000); // Simulación
+        return -1;
     }
 
-    // Diálogo para Cancelar Citas
+    private static class EstadoRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (value.equals("Completada")) {
+                c.setBackground(Color.LIGHT_GRAY);
+                c.setForeground(Color.DARK_GRAY);
+            } else {
+                c.setBackground(table.getBackground());
+                c.setForeground(table.getForeground());
+            }
+            return c;
+        }
+    }
+
+    private static class ButtonRenderer extends JButton implements TableCellRenderer {
+        public ButtonRenderer() {
+            setOpaque(true);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setText((value == null) ? "" : value.toString());
+            return this;
+        }
+    }
+
+    private static class ButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private AgendaService agenda;
+        private JTable table;
+        private int row;
+
+        // Constructor actualizado
+        public ButtonEditor(JCheckBox checkBox, AgendaService agenda, JTable table) {
+            super(checkBox);
+            this.agenda = agenda;
+            this.table = table;
+            button = new JButton("Cancelar");
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            this.row = row; // Guardar la fila actual
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            // Obtener datos de la fila seleccionada
+            String fechaStr = (String) table.getModel().getValueAt(row, 0);
+            String nombrePaciente = ((JTextField) ((JPanel) table.getParent().getParent().getComponent(0)).getComponent(1)).getText();
+            
+            // Cancelar la cita
+            int respuesta = JOptionPane.showConfirmDialog(
+                null, 
+                "¿Cancelar cita del " + fechaStr + "?", 
+                "Confirmar", 
+                JOptionPane.YES_NO_OPTION
+            );
+            
+            if (respuesta == JOptionPane.YES_OPTION) {
+                JOptionPane.showMessageDialog(null, "Cita cancelada!"); // Mostrar mensaje
+            }
+            
+            return "Cancelar";
+        }
+    }
+
+    // Diálogo para Cancelar Citas (Actualizado)
     private static class CancelarCitaDialog extends JDialog {
-        public CancelarCitaDialog(JFrame parent, AgendaService agenda, Paciente paciente) {
+        public CancelarCitaDialog(JFrame parent, AgendaService agenda) {
             super(parent, "Cancelar Cita", true);
-            setSize(300, 200);
+            setSize(600, 400);
             setLocationRelativeTo(parent);
             
-            JPanel panel = new JPanel(new BorderLayout());
-            JList<Cita> listaCitas = new JList<>(agenda.listar().stream()
-                .filter(c -> c.getPaciente().getId() == paciente.getId())
-                .toArray(Cita[]::new));
-            
-            JButton btnCancelar = new JButton("Cancelar Seleccionada");
-            btnCancelar.addActionListener(e -> {
-                Cita seleccionada = listaCitas.getSelectedValue();
-                if (seleccionada != null) {
-                    agenda.cancelarCita(paciente.getId(), seleccionada.getFechaHora());
-                    JOptionPane.showMessageDialog(this, "Cita cancelada!");
-                    dispose();
+            JPanel panel = new JPanel(new BorderLayout(10, 10));
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            // Campo para ingresar nombre del paciente
+            JPanel panelBusqueda = new JPanel(new FlowLayout());
+            JTextField txtNombre = new JTextField(20);
+            JButton btnBuscar = new JButton("Buscar Citas");
+            panelBusqueda.add(new JLabel("Nombre del paciente:"));
+            panelBusqueda.add(txtNombre);
+            panelBusqueda.add(btnBuscar);
+
+            // Modelo de tabla para citas
+            String[] columnas = {"Fecha", "Médico", "Especialidad", "Estado", "Acción"};
+            DefaultTableModel modeloTabla = new DefaultTableModel(columnas, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false; // Tabla no editable
+                }
+            };
+            JTable tablaCitas = new JTable(modeloTabla);
+            tablaCitas.setRowHeight(30);
+
+            // Renderizado personalizado para el estado y botones
+            tablaCitas.getColumnModel().getColumn(3).setCellRenderer(new EstadoRenderer());
+            tablaCitas.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
+            tablaCitas.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(new JCheckBox(), agenda, tablaCitas)
+);
+
+            btnBuscar.addActionListener(e -> {
+                String nombre = txtNombre.getText().trim();
+                if (nombre.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Ingrese un nombre", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                modeloTabla.setRowCount(0); // Limpiar tabla
+                List<Cita> citas = agenda.listar().stream()
+                    .filter(c -> c.getPaciente().getNombre().equalsIgnoreCase(nombre))
+                    .sorted(Comparator.comparing(Cita::getFechaHora))
+                    .toList();
+
+                if (citas.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "No se encontraron citas", "Info", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                for (Cita c : citas) {
+                    boolean esPendiente = c.getFechaHora().isAfter(LocalDateTime.now());
+                    Object[] fila = {
+                        c.getFechaHora().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                        c.getMedico().getNombre(),
+                        c.getMedico().getEspecialidad(),
+                        esPendiente ? "Pendiente" : "Completada",
+                        esPendiente ? "Cancelar" : ""
+                    };
+                    modeloTabla.addRow(fila);
                 }
             });
-            
-            panel.add(new JScrollPane(listaCitas), BorderLayout.CENTER);
-            panel.add(btnCancelar, BorderLayout.SOUTH);
+
+            panel.add(panelBusqueda, BorderLayout.NORTH);
+            panel.add(new JScrollPane(tablaCitas), BorderLayout.CENTER);
             add(panel);
         }
     }
 
+    
+
     public static void main(String[] args) {
         // Ejemplo de uso
         SwingUtilities.invokeLater(() -> {
-            new MenuPaciente(new AgendaService(new RepositorioArchivo("citas.txt"))).setVisible(true);
+            RepositorioPostgreSQL repoPostgres = new RepositorioPostgreSQL();
+            new MenuPaciente(new AgendaService(repoPostgres)).setVisible(true);
         });
     }
 }

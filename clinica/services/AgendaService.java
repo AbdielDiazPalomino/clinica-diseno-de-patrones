@@ -35,7 +35,7 @@ public class AgendaService {
     public void agendar(Cita nuevaCita) {
         if (validadorChain.esValida(nuevaCita, citas)) {
             citas.add(nuevaCita);
-            repositorio.guardar(citas);
+            repositorio.guardar(nuevaCita);
             System.out.println("Cita agendada correctamente para " + nuevaCita.getPaciente().getNombre());
         } else {
             System.out.println("Este horario se cruza con otra cita");
@@ -46,7 +46,7 @@ public class AgendaService {
         for (Cita cita : citas) {
             if (cita.getPaciente().getId() == idPaciente && cita.getFechaHora().equals(fechaHora)) {
                 citas.remove(cita);
-                repositorio.guardar(citas);
+                //repositorio.guardar(cita);
                 System.out.println("Cita cancelada.");
                 return true;
             }
