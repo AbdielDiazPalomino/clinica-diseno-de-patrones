@@ -32,6 +32,14 @@ public class Medico implements Serializable{
         this.id = id;
     }
 
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public void setEspecialidad(String especialidad) {
+        this.especialidad = especialidad;
+    }
+
     @Override
     public String toString() {
         return nombre + " (" + especialidad + ")";

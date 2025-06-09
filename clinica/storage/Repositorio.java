@@ -13,5 +13,6 @@ public interface Repositorio {
     List<String> obtenerEspecialidades();
     List<Medico> obtenerMedicosPorEspecialidad(String especialidad);
     void cancelarCita(int idPaciente, LocalDateTime fechaHora);
+    
 
 }
