@@ -32,13 +32,15 @@ public class AgendaService {
     }
 
 
-    public void agendar(Cita nuevaCita) {
+    public boolean agendar(Cita nuevaCita) {
         if (validadorChain.esValida(nuevaCita, citas)) {
             citas.add(nuevaCita);
             repositorio.guardar(nuevaCita);
             System.out.println("Cita agendada correctamente para " + nuevaCita.getPaciente().getNombre());
+            return true;
         } else {
             System.out.println("Este horario se cruza con otra cita");
+            return false;
         }
     }
 

@@ -6,29 +6,29 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class BuscadorDeCitas implements BuscadorCitas { // Implementa la interfaz
-    private final List<Cita> citas;
+    private final AgendaService agenda;
 
-    public BuscadorDeCitas(List<Cita> citas) {
-        this.citas = citas;
+    public BuscadorDeCitas(AgendaService agenda) {
+        this.agenda = agenda;
     }
 
-    @Override // Añadir anotación
+    @Override
     public List<Cita> buscarPorMedico(int idMedico) {
-        return citas.stream()
+        return agenda.listar().stream()
                 .filter(c -> c.getMedico().getId() == idMedico)
                 .collect(Collectors.toList());
     }
 
-    @Override // Añadir anotación
+    @Override 
     public List<Cita> buscarPorPaciente(int idPaciente) {
-        return citas.stream()
+        return agenda.listar().stream()
                 .filter(c -> c.getPaciente().getId() == idPaciente)
                 .collect(Collectors.toList());
     }
 
-    @Override // Añadir anotación
+    @Override 
     public List<Cita> buscarPorFecha(LocalDate fecha) {
-        return citas.stream()
+        return agenda.listar().stream()
                 .filter(c -> c.getFechaHora().toLocalDate().equals(fecha))
                 .collect(Collectors.toList());
     }

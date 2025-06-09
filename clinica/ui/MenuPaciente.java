@@ -10,7 +10,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 
 import java.awt.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import clinica.storage.RepositorioPostgreSQL;
 
@@ -95,11 +97,33 @@ public class MenuPaciente extends JFrame {
             }
         });
 
-        // Fecha y Hora
-        JLabel lblFecha = new JLabel("Fecha y Hora (dd/MM/yyyy HH:mm):");
-        JTextField txtFecha = new JTextField();
+        // Fecha y hora con JSpinner
+        JLabel lblFecha = new JLabel("Fecha:");
+        SpinnerDateModel dateModel = new SpinnerDateModel();
+        JSpinner spnFechaHora = new JSpinner(dateModel);
+
+        // Formatear el spinner para que muestre fecha y hora legible
+        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(spnFechaHora, "dd/MM/yyyy");
+        spnFechaHora.setEditor(dateEditor);
+
+        // Hora con JComboBox
+        JLabel lblHora = new JLabel("Hora:");
+        String[] horas = new String[24];
+        for (int i = 0; i < 24; i++) {
+            horas[i] = String.format("%02d", i);
+        }
+        JComboBox<String> cbHora = new JComboBox<>(horas);
+
+        JLabel lblMinuto = new JLabel("Minutos:");
+        String[] minutos = {"00", "15", "30", "45"};
+        JComboBox<String> cbMinuto = new JComboBox<>(minutos);
+
         panel.add(lblFecha);
-        panel.add(txtFecha);
+        panel.add(spnFechaHora);
+        panel.add(lblHora);
+        panel.add(cbHora);
+        panel.add(lblMinuto);
+        panel.add(cbMinuto);
         panel.add(new JLabel("Especialidad:"));
         panel.add(cbEspecialidades);
         panel.add(new JLabel("Médico:"));
@@ -111,26 +135,42 @@ public class MenuPaciente extends JFrame {
 
         btnAgendar.addActionListener(e -> {
             Medico medicoSeleccionado = cbMedicos.getItemAt(cbMedicos.getSelectedIndex());
-            // Validar selección
+
             if (medicoSeleccionado == null) {
                 JOptionPane.showMessageDialog(this, "Seleccione un médico", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            // Generar ID automático (simulado)
+
+            // Crear paciente
             int idPaciente = generarIdPaciente(); 
             paciente = new Paciente(idPaciente, txtNombre.getText(), (int) spnEdad.getValue());
-            
-            
-            // Parsear fecha
+
             try {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-                LocalDateTime fecha = LocalDateTime.parse(txtFecha.getText(), formatter);
-                
-                agenda.agendar(new Cita(medicoSeleccionado, paciente, fecha));
+            // Obtener la fecha
+            java.util.Date fechaSeleccionada = (java.util.Date) spnFechaHora.getValue();
+            LocalDate fecha = fechaSeleccionada.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+            // Obtener hora y minutos del combo
+            int hora = Integer.parseInt((String) cbHora.getSelectedItem());
+            int minuto = Integer.parseInt((String) cbMinuto.getSelectedItem());
+
+            // Combinar
+            LocalDateTime fechaHora = fecha.atTime(hora, minuto);
+
+            // Registrar cita
+            boolean exito = agenda.agendar(new Cita(medicoSeleccionado, paciente, fechaHora));
+            if(exito){
                 JOptionPane.showMessageDialog(this, "Cita agendada exitosamente!");
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Formato de fecha inválido!", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                "Este horario se cruza con otra cita. Por favor, elija otro horario.",
+                "Error de programación",
+                JOptionPane.ERROR_MESSAGE);
             }
+            
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al registrar la cita", "Error", JOptionPane.ERROR_MESSAGE);
+        }
         });
 
         btnCancelar.addActionListener(e -> {
