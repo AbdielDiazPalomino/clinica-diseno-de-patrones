@@ -65,6 +65,14 @@ public class AgendaService {
         repositorio.guardarMedico(medico);
     }
 
+    public void actualizarMedico(Medico medico) {
+        repositorio.actualizarMedico(medico);
+    }
+
+    public Medico obtenerMedicoPorId(int id) {
+        return repositorio.obtenerMedicoPorId(id);
+    }
+
     public List<String> obtenerEspecialidades() {
         List<String> especialidades = repositorio.obtenerEspecialidades();
         return especialidades != null ? especialidades : Collections.emptyList();
@@ -72,6 +80,10 @@ public class AgendaService {
 
     public List<Medico> obtenerMedicosPorEspecialidad(String especialidad) {
         return repositorio.obtenerMedicosPorEspecialidad(especialidad);
+    }
+
+    public List<Medico> obtenerTodosLosMedicos() {
+        return repositorio.obtenerTodosLosMedicos();
     }
 }
 

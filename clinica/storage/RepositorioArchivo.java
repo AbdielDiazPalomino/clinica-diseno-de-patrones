@@ -83,7 +83,7 @@ public class RepositorioArchivo implements Repositorio {
     public List<Medico> obtenerMedicosPorEspecialidad(String especialidad){
         return null;
     }
-    
+
     @Override
     public void cancelarCita(int idPaciente, LocalDateTime fechaHora) {
         List<Cita> citas = cargar();
@@ -104,6 +104,35 @@ public class RepositorioArchivo implements Repositorio {
         } catch (IOException e) {
             System.out.println("Error al guardar archivo: " + e.getMessage());
         }
+    }
+
+    @Override
+    public void actualizarMedico(Medico medico) {
+        // Implementación pendiente
+    }
+    
+    @Override
+    public Medico obtenerMedicoPorId(int id) {
+        List<Cita> citas = cargar();
+        for (Cita cita : citas) {
+            if (cita.getMedico().getId() == id) {
+                return cita.getMedico();
+            }
+        }
+        return null; // Si no se encuentra el médico
+    }
+
+    @Override
+    public List<Medico> obtenerTodosLosMedicos() {
+        List<Cita> citas = cargar();
+        List<Medico> medicos = new ArrayList<>();
+        for (Cita cita : citas) {
+            Medico medico = cita.getMedico();
+            if (!medicos.contains(medico)) {
+                medicos.add(medico);
+            }
+        }
+        return medicos;
     }
     
 }

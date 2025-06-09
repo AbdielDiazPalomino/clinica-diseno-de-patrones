@@ -93,6 +93,72 @@ public class RepositorioPostgreSQL implements Repositorio {
         }
     }
 
+    @Override
+    public void actualizarMedico(Medico medico) {
+        String sql = "UPDATE medicos SET nombre = ?, especialidad = ? WHERE id = ?";
+        
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, medico.getNombre());
+            pstmt.setString(2, medico.getEspecialidad());
+            pstmt.setInt(3, medico.getId());
+            int filasAfectadas = pstmt.executeUpdate();
+            
+            if (filasAfectadas > 0) {
+                System.out.println("Médico actualizado en la base de datos");
+            } else {
+                System.out.println("No se encontró médico con ID " + medico.getId());
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error al actualizar médico: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Medico obtenerMedicoPorId(int id) {
+        String sql = "SELECT id, nombre, especialidad FROM medicos WHERE id = ?";
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                return new Medico(
+                    rs.getInt("id"),
+                    rs.getString("nombre"),
+                    rs.getString("especialidad")
+                );
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener médico: " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public List<Medico> obtenerTodosLosMedicos() {
+        List<Medico> medicos = new ArrayList<>();
+        String sql = "SELECT id, nombre, especialidad FROM medicos";
+        
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                medicos.add(new Medico(
+                    rs.getInt("id"),
+                    rs.getString("nombre"),
+                    rs.getString("especialidad")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al cargar médicos: " + e.getMessage());
+        }
+        return medicos;
+    }
 
     @Override
     public List<Cita> cargar() {
