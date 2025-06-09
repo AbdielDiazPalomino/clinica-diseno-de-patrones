@@ -124,7 +124,7 @@ public class MenuAdminGUI extends JFrame {
         JButton btnCancelar = new JButton("Cancelar");
 
         // Cargar todos los médicos en el JComboBox
-        List<Medico> medicos = agenda.obtenerTodosLosMedicos(); // New method needed in AgendaService
+        List<Medico> medicos = agenda.obtenerTodosLosMedicos();
         for (Medico medico : medicos) {
             cbMedicos.addItem(medico);
         }
