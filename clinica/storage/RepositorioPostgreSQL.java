@@ -31,10 +31,10 @@ public class RepositorioPostgreSQL implements Repositorio {
                 
                 if (rs.next()) {
                     idPaciente = rs.getInt("id");
-                    System.out.println("[DEBUG] Nuevo ID Paciente: " + idPaciente); // 👈 Log
+                    System.out.println("[DEBUG] Nuevo ID Paciente: " + idPaciente); 
                 } else {
                     idPaciente = obtenerIdPaciente(conn, nuevaCita.getPaciente());
-                    System.out.println("[DEBUG] ID Paciente existente: " + idPaciente); // 👈 Log
+                    System.out.println("[DEBUG] ID Paciente existente: " + idPaciente); 
                 }
             } catch (SQLException e) {
                 conn.rollback();
@@ -194,5 +194,27 @@ public class RepositorioPostgreSQL implements Repositorio {
             System.err.println("Error al cargar médicos: " + e.getMessage());
         }
         return medicos;
+    }
+
+    @Override
+    public void cancelarCita(int idPaciente, LocalDateTime fechaHora) {
+        String sql = "DELETE FROM citas WHERE id_paciente = ? AND fecha_hora = ?";
+        
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, idPaciente);
+            pstmt.setTimestamp(2, Timestamp.valueOf(fechaHora));
+            int filasAfectadas = pstmt.executeUpdate();
+            
+            if (filasAfectadas > 0) {
+                System.out.println("Cita eliminada de la base de datos");
+            } else {
+                System.out.println("No se encontró la cita en la base de datos");
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error al cancelar cita: " + e.getMessage());
+        }
     }
 }

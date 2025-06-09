@@ -48,7 +48,7 @@ public class AgendaService {
         for (Cita cita : citas) {
             if (cita.getPaciente().getId() == idPaciente && cita.getFechaHora().equals(fechaHora)) {
                 citas.remove(cita);
-                //repositorio.guardar(cita);
+                repositorio.cancelarCita(idPaciente, fechaHora); // 👈 Llamada al repositorio
                 System.out.println("Cita cancelada.");
                 return true;
             }

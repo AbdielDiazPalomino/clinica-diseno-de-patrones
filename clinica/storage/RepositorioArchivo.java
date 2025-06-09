@@ -5,10 +5,6 @@ import clinica.models.Medico;
 import clinica.models.Paciente;
 
 import java.io.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,6 +82,28 @@ public class RepositorioArchivo implements Repositorio {
     @Override
     public List<Medico> obtenerMedicosPorEspecialidad(String especialidad){
         return null;
+    }
+    
+    @Override
+    public void cancelarCita(int idPaciente, LocalDateTime fechaHora) {
+        List<Cita> citas = cargar();
+        citas.removeIf(cita -> cita.getPaciente().getId() == idPaciente && cita.getFechaHora().equals(fechaHora));
+        
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivo))) {
+            for (Cita cita : citas) {
+                String linea = cita.getMedico().getId() + "," +
+                               cita.getMedico().getNombre() + "," +
+                               cita.getMedico().getEspecialidad() + "," +
+                               cita.getPaciente().getId() + "," +
+                               cita.getPaciente().getNombre() + "," +
+                               cita.getPaciente().getEdad() + "," +
+                               cita.getFechaHora();
+                writer.write(linea);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error al guardar archivo: " + e.getMessage());
+        }
     }
     
 }

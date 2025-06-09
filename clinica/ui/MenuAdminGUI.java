@@ -4,7 +4,6 @@ import clinica.models.Medico;
 import clinica.services.AgendaService;
 import clinica.services.BuscadorCitas;
 import clinica.services.BuscadorDeCitas;
-import clinica.storage.RepositorioPostgreSQL;
 
 import javax.swing.*;
 import java.awt.*;

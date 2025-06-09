@@ -297,16 +297,47 @@ public class MenuPaciente extends JFrame {
                 if (!e.getValueIsAdjusting()) {
                     int filaSeleccionada = tablaCitas.getSelectedRow();
                     if (filaSeleccionada != -1) {
-                        // Diálogo de confirmación
-                        int respuesta = JOptionPane.showConfirmDialog(
-                            this,
-                            "¿Está seguro que desea cancelar esta cita?",
-                            "Confirmar Cancelación",
-                            JOptionPane.YES_NO_OPTION
-                        );
-                        
-                        if (respuesta == JOptionPane.YES_OPTION) {
-                            System.out.println("Cita CANCELADA");
+                        // Obtener el estado de la cita (columna 3)
+                        String estado = (String) tablaCitas.getModel().getValueAt(filaSeleccionada, 3);
+                        // Solo mostrar diálogo para citas pendientes
+                        if ("Pendiente".equals(estado)) {
+                            int respuesta = JOptionPane.showConfirmDialog(
+                                this,
+                                "¿Está seguro que desea cancelar esta cita?",
+                                "Confirmar Cancelación",
+                                JOptionPane.YES_NO_OPTION
+                            );
+                            
+                            if (respuesta == JOptionPane.YES_OPTION) {
+                                // Obtener datos de la cita
+                                String fechaStr = (String) tablaCitas.getModel().getValueAt(filaSeleccionada, 0);
+                                String nombrePaciente = txtNombre.getText().trim();
+                                
+                                // Buscar la cita en la lista
+                                List<Cita> citas = agenda.listar();
+                                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                                LocalDateTime fecha = LocalDateTime.parse(fechaStr, formatter);
+                                
+                                Cita citaACancelar = citas.stream()
+                                    .filter(c -> c.getPaciente().getNombre().equalsIgnoreCase(nombrePaciente) 
+                                            && c.getFechaHora().equals(fecha))
+                                    .findFirst()
+                                    .orElse(null);
+                                
+                                if (citaACancelar != null) {
+                                    // Cancelar usando el servicio
+                                    boolean exito = agenda.cancelarCita(
+                                        citaACancelar.getPaciente().getId(), 
+                                        citaACancelar.getFechaHora()
+                                    );
+                                    
+                                    if (exito) {
+                                        JOptionPane.showMessageDialog(this, "Cita cancelada exitosamente!");
+                                        // Actualizar tabla
+                                        ((DefaultTableModel) tablaCitas.getModel()).removeRow(filaSeleccionada);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
