@@ -375,4 +375,27 @@ public class RepositorioPostgreSQL implements Repositorio {
         }
         return medicos;
     }
+
+    @Override
+    public List<Paciente> buscarPorNombrePaciente(String nombre) {
+        List<Paciente> pacientes = new ArrayList<>();
+        String sql = "SELECT id, nombre, edad FROM pacientes WHERE nombre LIKE ?";
+
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, "%" + nombre + "%");
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                pacientes.add(new Paciente(
+                        rs.getInt("id"),
+                        rs.getString("nombre"),
+                        rs.getInt("edad")));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al buscar pacientes por nombre: " + e.getMessage());
+        }
+        return pacientes;
+    }
 }

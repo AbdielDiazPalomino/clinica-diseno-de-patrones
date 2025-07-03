@@ -2,6 +2,7 @@ package clinica.services;
 
 import clinica.models.Cita;
 import clinica.models.Medico;
+import clinica.models.Paciente;
 import clinica.storage.Repositorio;
 
 import java.time.LocalDateTime;
@@ -106,6 +107,9 @@ public class AgendaService {
         return repositorio.buscarPorNombreMedico(nombre);
     }
 
+    public List<Paciente> buscarPorNombrePaciente(String nombre) {
+        return repositorio.buscarPorNombrePaciente(nombre);
+    }
 
 }
 

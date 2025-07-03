@@ -2,6 +2,7 @@ package clinica.storage;
 
 import clinica.models.Cita;
 import clinica.models.Medico;
+import clinica.models.Paciente;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +26,6 @@ public interface Repositorio {
     int obtenerIdEspecialidad(String nombre);
 
     List<Medico> buscarPorNombreMedico(String nombre);
-    
+    List<Paciente> buscarPorNombrePaciente(String nombre);
 
 }

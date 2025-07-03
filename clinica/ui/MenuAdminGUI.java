@@ -1,6 +1,7 @@
 package clinica.ui;
 
 import clinica.models.Medico;
+import clinica.models.Paciente;
 import clinica.services.AgendaService;
 import clinica.services.BuscadorCitas;
 import clinica.services.BuscadorDeCitas;
@@ -362,51 +363,100 @@ public class MenuAdminGUI extends JFrame {
         dialog.add(panelMedicos, BorderLayout.CENTER);
         dialog.add(scrollPane, BorderLayout.SOUTH);
 
-
         dialog.setSize(500, 600);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
 
     private void mostrarBusquedaPorPaciente() {
-        // Implementación similar a mostrarBusquedaPorMedico()
         JDialog dialog = new JDialog(this, "Buscar por Paciente", true);
         dialog.setLayout(new BorderLayout());
 
-        JTextField txtIdPaciente = new JTextField(10);
+        JTextField txtNombrePaciente = new JTextField(20);
+        JComboBox<Paciente> cbPacientes = new JComboBox<>();
         JButton btnBuscar = new JButton("Buscar");
-        JTextArea resultados = new JTextArea();
 
+        // Tabla para mostrar resultados
+        String[] columnas = { "Doctor", "Especialidad", "Día", "Hora" };
+        DefaultTableModel modeloTabla = new DefaultTableModel(columnas, 0);
+        JTable tablaResultados = new JTable(modeloTabla);
+        JScrollPane scrollPane = new JScrollPane(tablaResultados);
+
+        // Acción al escribir en el JTextField
+        txtNombrePaciente.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                actualizarPacientesPorNombre(txtNombrePaciente.getText().trim(), cbPacientes);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                actualizarPacientesPorNombre(txtNombrePaciente.getText().trim(), cbPacientes);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                actualizarPacientesPorNombre(txtNombrePaciente.getText().trim(), cbPacientes);
+            }
+        });
+
+        // Acción del botón Buscar
         btnBuscar.addActionListener(e -> {
-            try {
-                int id = Integer.parseInt(txtIdPaciente.getText().trim());
-                resultados.setText("");
-                var citas = buscador.buscarPorPaciente(id);
+            Paciente pacienteSeleccionado = (Paciente) cbPacientes.getSelectedItem();
+            if (pacienteSeleccionado != null) {
+                var citas = buscador.buscarPorPaciente(pacienteSeleccionado.getId());
 
-                if (citas.isEmpty()) {
-                    JOptionPane.showMessageDialog(dialog,
-                            "No se encontraron citas para el paciente con ID " + id,
-                            "Sin resultados",
-                            JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    citas.forEach(c -> resultados.append(c.toString() + "\n"));
+                // Limpiar el modelo de la tabla
+                modeloTabla.setRowCount(0);
+
+                // Agregar las citas al modelo
+                for (var cita : citas) {
+                    String dia = cita.getFechaHora().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    String hora = cita.getFechaHora().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+                    modeloTabla.addRow(new Object[] {
+                            cita.getMedico().getNombre(),
+                            cita.getMedico().getEspecialidad(),
+                            dia,
+                            hora
+                    });
                 }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Ingrese un ID válido", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(dialog, "Seleccione un paciente para buscar sus citas", "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
         JPanel panelSuperior = new JPanel();
-        panelSuperior.add(new JLabel("ID Paciente:"));
-        panelSuperior.add(txtIdPaciente);
+        panelSuperior.add(new JLabel("Nombre del Paciente:"));
+        panelSuperior.add(txtNombrePaciente);
         panelSuperior.add(btnBuscar);
 
-        dialog.add(panelSuperior, BorderLayout.NORTH);
-        dialog.add(new JScrollPane(resultados), BorderLayout.CENTER);
+        JPanel panelPacientes = new JPanel();
+        panelPacientes.add(new JLabel("Seleccionar Paciente:"));
+        panelPacientes.add(cbPacientes);
 
-        dialog.setSize(500, 300);
+        dialog.add(panelSuperior, BorderLayout.NORTH);
+        dialog.add(panelPacientes, BorderLayout.CENTER);
+        dialog.add(scrollPane, BorderLayout.SOUTH);
+
+        dialog.setSize(500, 600);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
+    }
+
+    private void actualizarPacientesPorNombre(String nombre, JComboBox<Paciente> cbPacientes) {
+        if (!nombre.isEmpty()) {
+            List<Paciente> pacientes = agenda.buscarPorNombrePaciente(nombre);
+            cbPacientes.removeAllItems();
+            for (Paciente paciente : pacientes) {
+                cbPacientes.addItem(paciente);
+            }
+            if (!pacientes.isEmpty()) {
+                cbPacientes.setSelectedIndex(0);
+            }
+        } else {
+            cbPacientes.removeAllItems();
+        }
     }
 
     private void mostrarBusquedaPorFecha() {

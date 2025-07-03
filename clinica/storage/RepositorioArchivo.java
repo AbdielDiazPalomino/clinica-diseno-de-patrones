@@ -156,5 +156,10 @@ public class RepositorioArchivo implements Repositorio {
     public List<Medico> buscarPorNombreMedico(String nombre) {
         return new ArrayList<>();
     }
+
+    @Override
+    public List<Paciente> buscarPorNombrePaciente(String nombre) {
+        return new ArrayList<>();
+    }
     
 }
