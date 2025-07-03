@@ -134,5 +134,27 @@ public class RepositorioArchivo implements Repositorio {
         }
         return medicos;
     }
+
+    @Override
+    public void guardarEspecialidad(String nombreEspecialidad) {
+    }
+
+    @Override
+    public void eliminarEspecialidad(int idEspecialidad) {
+        
+    }
+    @Override
+    public List<String> obtenerEspecialidadesDesdeTabla() {
+        return new ArrayList<>(); 
+    }
+    @Override
+    public int obtenerIdEspecialidad(String nombre) {
+        return -1; 
+    }
+
+    @Override
+    public List<Medico> buscarPorNombreMedico(String nombre) {
+        return new ArrayList<>();
+    }
     
 }

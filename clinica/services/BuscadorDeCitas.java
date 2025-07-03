@@ -12,10 +12,10 @@ public class BuscadorDeCitas implements BuscadorCitas { // Implementa la interfa
         this.agenda = agenda;
     }
 
-    @Override
+    @Override 
     public List<Cita> buscarPorMedico(int idMedico) {
         return agenda.listar().stream()
-                .filter(c -> c.getMedico().getId() == idMedico)
+                .filter(cita -> cita.getMedico().getId() == idMedico)
                 .collect(Collectors.toList());
     }
 

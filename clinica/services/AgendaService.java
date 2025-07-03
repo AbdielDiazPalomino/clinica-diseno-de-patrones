@@ -73,6 +73,14 @@ public class AgendaService {
         return repositorio.obtenerMedicoPorId(id);
     }
 
+    public void guardarEspecialidad(String nombreEspecialidad) {
+        repositorio.guardarEspecialidad(nombreEspecialidad);
+    }
+
+    public void eliminarEspecialidad(int idEspecialidad) {
+        repositorio.eliminarEspecialidad(idEspecialidad);
+    }
+
     public List<String> obtenerEspecialidades() {
         List<String> especialidades = repositorio.obtenerEspecialidades();
         return especialidades != null ? especialidades : Collections.emptyList();
@@ -85,5 +93,19 @@ public class AgendaService {
     public List<Medico> obtenerTodosLosMedicos() {
         return repositorio.obtenerTodosLosMedicos();
     }
+
+    public List<String> obtenerEspecialidadesDesdeTabla() {
+        return repositorio.obtenerEspecialidadesDesdeTabla();
+    }
+
+    public int obtenerIdEspecialidad(String nombre) {
+        return repositorio.obtenerIdEspecialidad(nombre);
+    }
+
+    public List<Medico> buscarPorNombreMedico(String nombre) {
+        return repositorio.buscarPorNombreMedico(nombre);
+    }
+
+
 }
 

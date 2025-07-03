@@ -19,6 +19,12 @@ public interface Repositorio {
     void cancelarCita(int idPaciente, LocalDateTime fechaHora);
 
     List<Medico> obtenerTodosLosMedicos(); 
+    void guardarEspecialidad(String nombreEspecialidad);
+    void eliminarEspecialidad(int idEspecialidad);
+    List<String> obtenerEspecialidadesDesdeTabla();
+    int obtenerIdEspecialidad(String nombre);
+
+    List<Medico> buscarPorNombreMedico(String nombre);
     
 
 }
