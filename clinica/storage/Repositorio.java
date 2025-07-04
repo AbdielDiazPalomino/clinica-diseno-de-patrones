@@ -28,4 +28,7 @@ public interface Repositorio {
     List<Medico> buscarPorNombreMedico(String nombre);
     List<Paciente> buscarPorNombrePaciente(String nombre);
 
+    List<Cita> obtenerCitasPorMes(int year, int month);
+    List<Cita> obtenerCitasPorAno(int year);
+
 }

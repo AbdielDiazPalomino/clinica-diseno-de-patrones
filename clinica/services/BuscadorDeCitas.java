@@ -32,4 +32,12 @@ public class BuscadorDeCitas implements BuscadorCitas { // Implementa la interfa
                 .filter(c -> c.getFechaHora().toLocalDate().equals(fecha))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<Cita> buscarPorRangoFechas(LocalDate inicio, LocalDate fin) {
+        return agenda.listar().stream()
+                .filter(cita -> !cita.getFechaHora().toLocalDate().isBefore(inicio) && 
+                                !cita.getFechaHora().toLocalDate().isAfter(fin))
+                .collect(Collectors.toList());
+    }
 }

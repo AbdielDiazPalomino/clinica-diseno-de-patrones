@@ -111,5 +111,13 @@ public class AgendaService {
         return repositorio.buscarPorNombrePaciente(nombre);
     }
 
+    public List<Cita> obtenerCitasPorMes(int year, int month) {
+        return repositorio.obtenerCitasPorMes(year, month);
+    }
+
+    public List<Cita> obtenerCitasPorAno(int year) {
+        return repositorio.obtenerCitasPorAno(year);
+    }
+
 }
 

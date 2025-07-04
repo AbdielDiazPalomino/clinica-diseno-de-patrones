@@ -1,5 +1,6 @@
 package clinica.ui;
 
+import clinica.models.Cita;
 import clinica.models.Medico;
 import clinica.models.Paciente;
 import clinica.services.AgendaService;
@@ -11,11 +12,17 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 
+import com.toedter.calendar.JCalendar;
+
 import java.awt.*;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 import java.util.List;
+
 
 public class MenuAdminGUI extends JFrame {
     private final AgendaService agenda;
@@ -463,26 +470,153 @@ public class MenuAdminGUI extends JFrame {
         JDialog dialog = new JDialog(this, "Buscar por Fecha", true);
         dialog.setLayout(new BorderLayout());
 
-        JTextField txtFecha = new JTextField(LocalDate.now().toString());
-        JButton btnBuscar = new JButton("Buscar");
-        JTextArea resultados = new JTextArea();
+        // Opciones de búsqueda
+        String[] opciones = { "Día", "Mes", "Año", "Rango de Fechas" };
+        JComboBox<String> cbOpciones = new JComboBox<>(opciones);
 
-        btnBuscar.addActionListener(e -> {
-            LocalDate fecha = LocalDate.parse(txtFecha.getText());
-            resultados.setText("");
-            buscador.buscarPorFecha(fecha).forEach(c -> resultados.append(c.toString() + "\n"));
+        // Componentes para cada opción
+        JCalendar calendarDia = new JCalendar();
+        JComboBox<Integer> cbAnio = new JComboBox<>();
+        JComboBox<String> cbMes = new JComboBox<>(new String[] { "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" });
+        JCalendar calendarInicio = new JCalendar();
+        JCalendar calendarFin = new JCalendar();
+
+        int anoActual = java.time.Year.now().getValue();
+        for (int ano = 2022; ano <= anoActual; ano++) {
+            cbAnio.addItem(ano);
+        }
+
+        // Panel para los componentes específicos de cada opción
+        JPanel panelOpciones = new JPanel();
+        panelOpciones.setLayout(new BoxLayout(panelOpciones, BoxLayout.Y_AXIS));
+
+        // Agregar componentes al panelOpciones
+        panelOpciones.add(calendarDia);
+        panelOpciones.add(cbMes);
+        panelOpciones.add(cbAnio);
+        panelOpciones.add(calendarInicio);
+        
+        panelOpciones.add(calendarFin);
+
+        // Inicialmente ocultar todos los componentes
+        calendarDia.setVisible(true);
+        cbMes.setVisible(false);
+        cbAnio.setVisible(false);
+        calendarInicio.setVisible(false);
+        calendarFin.setVisible(false);
+
+        // Panel para el botón Buscar
+        JButton btnBuscar = new JButton("Buscar");
+        JPanel panelBoton = new JPanel();
+        panelBoton.add(btnBuscar);
+
+        // Acción al seleccionar una opción
+        cbOpciones.addActionListener(e -> {
+            String opcion = (String) cbOpciones.getSelectedItem();
+            calendarDia.setVisible(false);
+            cbMes.setVisible(false);
+            cbAnio.setVisible(false);
+            calendarInicio.setVisible(false);
+            calendarFin.setVisible(false);
+
+            switch (opcion) {
+                case "Día":
+                    calendarDia.setVisible(true);
+                    break;
+                case "Mes":
+                    cbMes.setVisible(true);
+                    cbAnio.setVisible(true);
+                    break;
+                case "Año":
+                    cbAnio.setVisible(true);
+                    break;
+                case "Rango de Fechas":
+                    calendarInicio.setVisible(true);
+                    calendarFin.setVisible(true);
+                    break;
+            }
         });
 
+        // Acción del botón Buscar
+        btnBuscar.addActionListener(e -> {
+            String opcion = (String) cbOpciones.getSelectedItem();
+            List<Cita> citas = new ArrayList<>();
+
+            try {
+                switch (opcion) {
+                    case "Día":
+                        LocalDate fechaSeleccionada = calendarDia.getDate().toInstant().atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+                        citas = buscador.buscarPorFecha(fechaSeleccionada);
+                        break;
+                    case "Mes":
+                        int mes = cbMes.getSelectedIndex() + 1; // Obtener mes (1-12)
+                        int ano = (int) cbAnio.getSelectedItem();
+                        citas = agenda.obtenerCitasPorMes(ano, mes);
+                        break;
+                    case "Año":
+                        int anoSeleccionado = (int) cbAnio.getSelectedItem();
+                        citas = agenda.obtenerCitasPorAno(anoSeleccionado);
+                        break;
+                    case "Rango de Fechas":
+                        LocalDate fechaInicio = calendarInicio.getDate().toInstant().atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+                        LocalDate fechaFin = calendarFin.getDate().toInstant().atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+                        citas = buscador.buscarPorRangoFechas(fechaInicio, fechaFin);
+                        break;
+                }
+
+                // Mostrar resultados
+                mostrarResultados(citas);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Error al buscar citas: " + ex.getMessage(), "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        // Crear el panel superior con los componentes
         JPanel panelSuperior = new JPanel();
-        panelSuperior.add(new JLabel("Fecha (yyyy-MM-dd):"));
-        panelSuperior.add(txtFecha);
-        panelSuperior.add(btnBuscar);
+        panelSuperior.add(new JLabel("Buscar por:"));
+        panelSuperior.add(cbOpciones);
 
+        // Agregar componentes al diálogo
         dialog.add(panelSuperior, BorderLayout.NORTH);
-        dialog.add(new JScrollPane(resultados), BorderLayout.CENTER);
+        dialog.add(panelOpciones, BorderLayout.CENTER);
+        dialog.add(panelBoton, BorderLayout.SOUTH);
 
-        dialog.setSize(500, 300);
+        dialog.setSize(700, 600);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
+
+        cbOpciones.setSelectedIndex(0); // Asegurarse de que el índice 0 sea "Día"
+
+        
+        cbOpciones.getActionListeners()[0].actionPerformed(null);
+        
     }
+
+    private void mostrarResultados(List<Cita> citas) {
+        JDialog resultadosDialog = new JDialog(this, "Resultados de Búsqueda", true);
+        JTextArea resultados = new JTextArea();
+        resultados.setEditable(false);
+
+        if (citas.isEmpty()) {
+            resultados.setText("No se encontraron citas para la búsqueda seleccionada.");
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Resultados de la búsqueda:\n\n");
+            for (Cita cita : citas) {
+                sb.append(cita.toString()).append("\n");
+            }
+            resultados.setText(sb.toString());
+        }
+
+        resultadosDialog.add(new JScrollPane(resultados));
+        resultadosDialog.setSize(600, 400);
+        resultadosDialog.setLocationRelativeTo(this);
+        resultadosDialog.setVisible(true);
+    }
+
 }

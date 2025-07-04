@@ -398,4 +398,75 @@ public class RepositorioPostgreSQL implements Repositorio {
         }
         return pacientes;
     }
+
+    @Override
+    public List<Cita> obtenerCitasPorMes(int year, int month) {
+        List<Cita> citas = new ArrayList<>();
+        String sql = "SELECT m.id as mid, m.nombre as mnombre, m.especialidad, " +
+                "p.id as pid, p.nombre as pnombre, p.edad, c.fecha_hora " +
+                "FROM citas c " +
+                "JOIN medicos m ON c.id_medico = m.id " +
+                "JOIN pacientes p ON c.id_paciente = p.id " +
+                "WHERE EXTRACT(YEAR FROM c.fecha_hora) = ? AND EXTRACT(MONTH FROM c.fecha_hora) = ?";
+
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, year);
+            pstmt.setInt(2, month);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Medico medico = new Medico(
+                        rs.getInt("mid"),
+                        rs.getString("mnombre"),
+                        rs.getString("especialidad"));
+                Paciente paciente = new Paciente(
+                        rs.getInt("pid"),
+                        rs.getString("pnombre"),
+                        rs.getInt("edad"));
+                LocalDateTime fecha = rs.getTimestamp("fecha_hora").toLocalDateTime();
+
+                citas.add(new Cita(medico, paciente, fecha));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener citas por mes: " + e.getMessage());
+        }
+        return citas;
+    }
+
+    @Override
+    public List<Cita> obtenerCitasPorAno(int year) {
+        List<Cita> citas = new ArrayList<>();
+        String sql = "SELECT m.id as mid, m.nombre as mnombre, m.especialidad, " +
+                "p.id as pid, p.nombre as pnombre, p.edad, c.fecha_hora " +
+                "FROM citas c " +
+                "JOIN medicos m ON c.id_medico = m.id " +
+                "JOIN pacientes p ON c.id_paciente = p.id " +
+                "WHERE EXTRACT(YEAR FROM c.fecha_hora) = ?";
+
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, year);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Medico medico = new Medico(
+                        rs.getInt("mid"),
+                        rs.getString("mnombre"),
+                        rs.getString("especialidad"));
+                Paciente paciente = new Paciente(
+                        rs.getInt("pid"),
+                        rs.getString("pnombre"),
+                        rs.getInt("edad"));
+                LocalDateTime fecha = rs.getTimestamp("fecha_hora").toLocalDateTime();
+
+                citas.add(new Cita(medico, paciente, fecha));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener citas por año: " + e.getMessage());
+        }
+        return citas;
+    }
 }

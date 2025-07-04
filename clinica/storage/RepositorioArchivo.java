@@ -161,5 +161,15 @@ public class RepositorioArchivo implements Repositorio {
     public List<Paciente> buscarPorNombrePaciente(String nombre) {
         return new ArrayList<>();
     }
+
+    @Override
+    public List<Cita> obtenerCitasPorMes(int year, int month) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<Cita> obtenerCitasPorAno(int year) {
+        return new ArrayList<>();
+    }
     
 }
