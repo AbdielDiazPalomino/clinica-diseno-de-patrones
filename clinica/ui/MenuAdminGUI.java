@@ -16,7 +16,6 @@ import com.toedter.calendar.JCalendar;
 
 import java.awt.*;
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
@@ -327,7 +326,8 @@ public class MenuAdminGUI extends JFrame {
         cbMedicos.addActionListener(e -> {
             Medico medico = (Medico) cbMedicos.getSelectedItem();
             if (medico != null) {
-                Integer medicoSeleccionado = medico.getId(); // Almacenar el ID del médico
+                Integer medicoSeleccionado = medico.getId(); 
+                
             }
         });
 
