@@ -2,6 +2,8 @@ package clinica;
 
 import javax.swing.SwingUtilities;
 
+import clinica.observer.NotificadorEmail;
+import clinica.observer.NotificadorSMS;
 import clinica.services.AgendaService;
 import clinica.storage.Repositorio;
 //import clinica.storage.RepositorioArchivo;
@@ -61,6 +63,9 @@ public class Main {
         ValidadorDeCitas validador = new ValidadorBase();
         validador = new DisponibilidadPorHorarioMedicoDecorator(validador);
         servicio.agregarValidador(validador);
+
+        servicio.agregarObservador(new NotificadorEmail());
+        servicio.agregarObservador(new NotificadorSMS());
         
         // Mostrar la ventana principal
         SwingUtilities.invokeLater(() -> {

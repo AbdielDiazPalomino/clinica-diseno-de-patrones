@@ -13,8 +13,10 @@ import java.util.List;
 import clinica.validadores.ValidadorBase;
 import clinica.validadores.ValidadorDeCitas;
 
+import clinica.observer.Observable;
 
-public class AgendaService {
+
+public class AgendaService extends Observable {
     private List<Cita> citas;
     private final Repositorio repositorio;
     private ValidadorDeCitas validadorChain;
@@ -37,7 +39,8 @@ public class AgendaService {
         if (validadorChain.esValida(nuevaCita, citas)) {
             citas.add(nuevaCita);
             repositorio.guardar(nuevaCita);
-            System.out.println("Cita agendada correctamente para " + nuevaCita.getPaciente().getNombre());
+            notificarObservadores("Nueva cita agendada para " + 
+                nuevaCita.getPaciente().getNombre());
             return true;
         } else {
             System.out.println("Este horario se cruza con otra cita");
@@ -49,8 +52,8 @@ public class AgendaService {
         for (Cita cita : citas) {
             if (cita.getPaciente().getId() == idPaciente && cita.getFechaHora().equals(fechaHora)) {
                 citas.remove(cita);
-                repositorio.cancelarCita(idPaciente, fechaHora); // 👈 Llamada al repositorio
-                System.out.println("Cita cancelada.");
+                repositorio.cancelarCita(idPaciente, fechaHora);
+                notificarObservadores("Cita cancelada correctamente");
                 return true;
             }
         }
